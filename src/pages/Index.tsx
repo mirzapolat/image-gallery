@@ -3,8 +3,9 @@ import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shuffle, Import, SortAsc, SortDesc } from 'lucide-react';
+import { Shuffle, Import, SortAsc, SortDesc, Maximize, Minimize } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Slider } from '@/components/ui/slider';
 
 interface ImageFile {
   id: string;
@@ -24,6 +25,8 @@ const Index = () => {
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [isShuffling, setIsShuffling] = useState(false);
+  const [isShuffled, setIsShuffled] = useState(false);
+  const [imageSize, setImageSize] = useState(100); // 100% is the default size
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -55,6 +58,7 @@ const Index = () => {
     });
 
     setImages(prev => [...prev, ...imageFiles]);
+    setIsShuffled(false); // Reset shuffle state when adding new images
     toast({
       title: "Images imported",
       description: `Successfully imported ${imageFiles.length} images`,
@@ -70,6 +74,7 @@ const Index = () => {
     setIsShuffling(true);
     setTimeout(() => {
       setImages(prev => [...prev].sort(() => Math.random() - 0.5));
+      setIsShuffled(true);
       setIsShuffling(false);
       toast({
         title: "Images shuffled",
@@ -78,7 +83,16 @@ const Index = () => {
     }, 300);
   }, [toast]);
 
+  const handleImageSizeChange = useCallback((value: number[]) => {
+    setImageSize(value[0]);
+  }, []);
+
   const sortedImages = useMemo(() => {
+    // If images are shuffled, don't apply sorting
+    if (isShuffled) {
+      return [...images];
+    }
+    
     const sorted = [...images].sort((a, b) => {
       let comparison = 0;
       
@@ -101,10 +115,16 @@ const Index = () => {
     });
     
     return sorted;
-  }, [images, sortCriteria, sortOrder]);
+  }, [images, sortCriteria, sortOrder, isShuffled]);
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    setIsShuffled(false); // Reset shuffle state when changing sort order
+  };
+
+  const handleSortChange = (value: SortCriteria) => {
+    setSortCriteria(value);
+    setIsShuffled(false); // Reset shuffle state when changing sort criteria
   };
 
   const formatFileSize = (bytes: number) => {
@@ -147,7 +167,7 @@ const Index = () => {
 
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-gray-700">Sort by:</span>
-              <Select value={sortCriteria} onValueChange={(value: SortCriteria) => setSortCriteria(value)}>
+              <Select value={sortCriteria} onValueChange={handleSortChange}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -167,6 +187,24 @@ const Index = () => {
               >
                 {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
               </Button>
+            </div>
+
+            <div className="flex items-center gap-2 ml-4">
+              <span className="text-sm font-medium text-gray-700 whitespace-nowrap flex items-center gap-1">
+                <Minimize size={16} className="text-gray-500" />
+                Image Size:
+                <Maximize size={16} className="text-gray-500" />
+              </span>
+              <div className="w-32">
+                <Slider 
+                  defaultValue={[imageSize]} 
+                  min={50} 
+                  max={150} 
+                  step={10}
+                  onValueChange={handleImageSizeChange}
+                />
+              </div>
+              <span className="text-xs text-gray-500 w-8">{imageSize}%</span>
             </div>
 
             <div className="text-sm text-gray-500 ml-auto">
@@ -201,6 +239,7 @@ const Index = () => {
                     src={image.url}
                     alt={image.name}
                     className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+                    style={{ width: `${imageSize}%`, margin: '0 auto' }}
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
