@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -25,7 +24,6 @@ const Index = () => {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
-  const [isShuffling, setIsShuffling] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
   const [columnCount, setColumnCount] = useState(5);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -65,6 +63,8 @@ const Index = () => {
           event.preventDefault();
           handleReset();
           break;
+        case '1':
+        case '2':
         case '3':
         case '4':
         case '5':
@@ -171,18 +171,12 @@ const Index = () => {
   }, [toast]);
 
   const shuffleImages = useCallback(() => {
-    setIsShuffling(true);
-    setTimeout(() => {
-      setImages(prev => [...prev].sort(() => Math.random() - 0.5));
-      setIsShuffled(true);
-      setTimeout(() => {
-        setIsShuffling(false);
-        toast({
-          title: "Images shuffled",
-          description: "Gallery order has been randomized",
-        });
-      }, 100);
-    }, 800);
+    setImages(prev => [...prev].sort(() => Math.random() - 0.5));
+    setIsShuffled(true);
+    toast({
+      title: "Images shuffled",
+      description: "Gallery order has been randomized",
+    });
   }, [toast]);
 
   const handleReset = useCallback(() => {
@@ -307,12 +301,12 @@ const Index = () => {
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Import size={20} />
-              Import Images (I)
+              Import Images
             </Button>
             
             <Button 
               onClick={shuffleImages}
-              disabled={images.length === 0 || isShuffling}
+              disabled={images.length === 0}
               variant="outline"
               className={`flex items-center gap-2 ${
                 isDarkMode 
@@ -320,8 +314,8 @@ const Index = () => {
                   : 'border-purple-200 hover:border-purple-300 hover:bg-purple-50'
               }`}
             >
-              <Shuffle size={20} className={isShuffling ? 'animate-spin' : ''} />
-              {isShuffling ? 'Shuffling...' : 'Shuffle (S)'}
+              <Shuffle size={20} />
+              Shuffle
             </Button>
 
             <Button 
@@ -335,7 +329,7 @@ const Index = () => {
               }`}
             >
               <RotateCcw size={20} />
-              Reset (R)
+              Reset
             </Button>
 
             <div className="flex items-center gap-2">
@@ -369,12 +363,12 @@ const Index = () => {
                 isDarkMode ? 'text-gray-300' : 'text-gray-700'
               }`}>
                 <Columns size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
-                Columns (3-0):
+                Columns:
               </span>
               <div className="w-32">
                 <Slider 
                   defaultValue={[columnCount]} 
-                  min={3} 
+                  min={1} 
                   max={10} 
                   step={1}
                   onValueChange={handleColumnCountChange}
@@ -391,20 +385,6 @@ const Index = () => {
             </div>
           </div>
         </Card>
-
-        {/* Shuffling overlay */}
-        {isShuffling && (
-          <div className="fixed inset-0 bg-black/20 z-40 flex items-center justify-center backdrop-blur-sm">
-            <div className={`p-6 rounded-lg shadow-xl ${
-              isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'
-            }`}>
-              <div className="flex items-center gap-3">
-                <div className="w-6 h-6 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-lg font-medium">Shuffling images...</span>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Gallery */}
         {sortedImages.length === 0 ? (
@@ -435,7 +415,7 @@ const Index = () => {
                 key={image.id} 
                 className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 ${
                   isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
-                } ${isShuffling ? 'opacity-50' : 'opacity-100'}`}
+                }`}
                 style={{
                   animationDelay: `${index * 50}ms`
                 }}
