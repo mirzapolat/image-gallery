@@ -17,7 +17,6 @@ interface ImageFile {
   size: number;
   type: string;
   dateModified: number;
-  dimensions?: { width: number; height: number };
 }
 
 type SortCriteria = 'name' | 'date' | 'size' | 'type';
@@ -35,22 +34,9 @@ const Index = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number>(-1);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [imageDimensions, setImageDimensions] = useState<Record<string, { width: number; height: number }>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
   const { toast } = useToast();
-
-  // Load image dimensions
-  const loadImageDimensions = useCallback((imageFile: ImageFile) => {
-    const img = new Image();
-    img.onload = () => {
-      setImageDimensions(prev => ({
-        ...prev,
-        [imageFile.id]: { width: img.width, height: img.height }
-      }));
-    };
-    img.src = imageFile.url;
-  }, []);
 
   // Filter images based on search term
   const filteredImages = useMemo(() => {
@@ -92,48 +78,6 @@ const Index = () => {
     return sorted;
   }, [filteredImages, sortCriteria, sortOrder, isShuffled]);
 
-  // Calculate waterfall layout with proper left-to-right, top-to-bottom ordering
-  const calculateWaterfallLayout = useMemo(() => {
-    if (sortedImages.length === 0) return [];
-
-    const columnHeights = new Array(columnCount).fill(0);
-    const layoutItems: Array<{
-      image: ImageFile;
-      originalIndex: number;
-      column: number;
-      top: number;
-      height: number;
-    }> = [];
-
-    sortedImages.forEach((image, index) => {
-      const dimensions = imageDimensions[image.id];
-      
-      // Calculate height based on actual aspect ratio or use default
-      let calculatedHeight = 250; // Default height
-      if (dimensions) {
-        const aspectRatio = dimensions.height / dimensions.width;
-        const cardWidth = 300; // Approximate card width
-        calculatedHeight = cardWidth * aspectRatio;
-      }
-
-      // For left-to-right flow, cycle through columns in order
-      const targetColumn = index % columnCount;
-      
-      layoutItems.push({
-        image,
-        originalIndex: index,
-        column: targetColumn,
-        top: columnHeights[targetColumn],
-        height: calculatedHeight
-      });
-
-      // Update column height
-      columnHeights[targetColumn] += calculatedHeight + 16; // Add gap
-    });
-
-    return layoutItems;
-  }, [sortedImages, columnCount, imageDimensions]);
-
   // Apply dark mode to document
   useEffect(() => {
     if (isDarkMode) {
@@ -142,15 +86,6 @@ const Index = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [isDarkMode]);
-
-  // Load dimensions for new images
-  useEffect(() => {
-    images.forEach(image => {
-      if (!imageDimensions[image.id]) {
-        loadImageDimensions(image);
-      }
-    });
-  }, [images, imageDimensions, loadImageDimensions]);
 
   // Hotkeys
   useEffect(() => {
@@ -355,8 +290,8 @@ const Index = () => {
     setIsFullscreen(prev => !prev);
   }, []);
 
-  const openPreview = useCallback((originalIndex: number) => {
-    setPreviewIndex(originalIndex);
+  const openPreview = useCallback((index: number) => {
+    setPreviewIndex(index);
     setIsPreviewOpen(true);
   }, []);
 
@@ -461,37 +396,35 @@ const Index = () => {
             </div>
           ) : (
             <div 
-              className="relative"
+              className="gap-4" 
               style={{ 
-                display: 'grid',
-                gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-                gap: '16px',
-                alignItems: 'start'
+                columnCount: columnCount, 
+                columnGap: '1rem',
+                columnFill: 'balance'
               }}
             >
-              {calculateWaterfallLayout.map((item) => (
+              {sortedImages.map((image, index) => (
                 <Card 
-                  key={item.image.id} 
-                  className={`shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
+                  key={image.id} 
+                  className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
                     isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                   }`}
                   style={{
-                    gridColumn: item.column + 1,
-                    animationDelay: `${item.originalIndex * 50}ms`
+                    animationDelay: `${index * 50}ms`
                   }}
-                  onClick={() => openPreview(item.originalIndex)}
+                  onClick={() => openPreview(index)}
                 >
                   <div className="relative group">
                     <img
-                      src={item.image.url}
-                      alt={item.image.name}
+                      src={image.url}
+                      alt={image.name}
                       className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4">
-                      <p className="text-white text-sm font-medium truncate">{item.image.name}</p>
-                      <p className="text-white/80 text-xs">{formatFileSize(item.image.size)}</p>
+                      <p className="text-white text-sm font-medium truncate">{image.name}</p>
+                      <p className="text-white/80 text-xs">{formatFileSize(image.size)}</p>
                     </div>
                   </div>
                 </Card>
@@ -738,37 +671,35 @@ const Index = () => {
           </Card>
         ) : (
           <div 
-            className="relative"
+            className="gap-4" 
             style={{ 
-              display: 'grid',
-              gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-              gap: '16px',
-              alignItems: 'start'
+              columnCount: columnCount, 
+              columnGap: '1rem',
+              columnFill: 'balance'
             }}
           >
-            {calculateWaterfallLayout.map((item) => (
+            {sortedImages.map((image, index) => (
               <Card 
-                key={item.image.id} 
-                className={`shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
+                key={image.id} 
+                className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
                   isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                 }`}
                 style={{
-                  gridColumn: item.column + 1,
-                  animationDelay: `${item.originalIndex * 50}ms`
+                  animationDelay: `${index * 50}ms`
                 }}
-                onClick={() => openPreview(item.originalIndex)}
+                onClick={() => openPreview(index)}
               >
                 <div className="relative group">
                   <img
-                    src={item.image.url}
-                    alt={item.image.name}
+                    src={image.url}
+                    alt={image.name}
                     className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4">
-                    <p className="text-white text-sm font-medium truncate">{item.image.name}</p>
-                    <p className="text-white/80 text-xs">{formatFileSize(item.image.size)}</p>
+                    <p className="text-white text-sm font-medium truncate">{image.name}</p>
+                    <p className="text-white/80 text-xs">{formatFileSize(image.size)}</p>
                   </div>
                 </div>
               </Card>
