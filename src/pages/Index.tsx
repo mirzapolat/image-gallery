@@ -174,8 +174,8 @@ const Index = () => {
         calculatedWidth: imageWidth,
       };
 
-      // Update the column height
-      columnHeights[shortestColumnIndex] += totalCardHeight + gap;
+      // Update the column height - remove the extra gap since CSS gap handles spacing
+      columnHeights[shortestColumnIndex] += totalCardHeight;
 
       return positionedImage;
     });
