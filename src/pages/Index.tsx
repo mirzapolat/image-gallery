@@ -140,7 +140,19 @@ const Index = () => {
     if (images.length === 0) return [];
 
     const gap = 16; // consistent gap between images both horizontally and vertically
-    const containerMaxWidth = isFullscreen ? window.innerWidth - 32 : 1280; // max-w-7xl equivalent or fullscreen
+    
+    // Calculate container width based on actual viewport and padding
+    let containerMaxWidth;
+    if (isFullscreen) {
+      containerMaxWidth = window.innerWidth - 32; // fullscreen with padding
+    } else {
+      // For normal mode, use the actual available width considering max-w-7xl constraint
+      const viewportWidth = window.innerWidth;
+      const maxContainerWidth = 1280; // max-w-7xl
+      const actualMaxWidth = Math.min(viewportWidth - 32, maxContainerWidth); // 32px for padding
+      containerMaxWidth = actualMaxWidth;
+    }
+    
     const availableWidth = containerMaxWidth - (gap * (columnCount - 1));
     const imageWidth = Math.floor(availableWidth / columnCount);
 
