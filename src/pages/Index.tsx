@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Shuffle, Import, SortAsc, SortDesc, Columns, RotateCcw, Moon, Sun, Maximize, Minimize } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
+import ImagePreview from '@/components/ImagePreview';
 
 interface ImageFile {
   id: string;
@@ -30,6 +30,8 @@ const Index = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState<number>(-1);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
   const { toast } = useToast();
@@ -46,8 +48,8 @@ const Index = () => {
   // Hotkeys
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input
-      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+      // Don't trigger if user is typing in an input or if preview is open
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || isPreviewOpen) {
         return;
       }
 
@@ -101,7 +103,7 @@ const Index = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [images.length, isFullscreen]);
+  }, [images.length, isFullscreen, isPreviewOpen]);
 
   // Improved drag and drop functionality with proper event handling
   const handleDragEnter = useCallback((event: React.DragEvent) => {
@@ -228,6 +230,8 @@ const Index = () => {
     setSortCriteria('name');
     setSortOrder('asc');
     setColumnCount(5);
+    setIsPreviewOpen(false);
+    setPreviewIndex(-1);
     
     toast({
       title: "Gallery reset",
@@ -242,6 +246,42 @@ const Index = () => {
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen(prev => !prev);
   }, []);
+
+  const openPreview = useCallback((index: number) => {
+    setPreviewIndex(index);
+    setIsPreviewOpen(true);
+  }, []);
+
+  const closePreview = useCallback(() => {
+    setIsPreviewOpen(false);
+    setPreviewIndex(-1);
+  }, []);
+
+  const goToNextImage = useCallback(() => {
+    if (previewIndex < sortedImages.length - 1) {
+      setPreviewIndex(prev => prev + 1);
+    }
+  }, [previewIndex, sortedImages.length]);
+
+  const goToPreviousImage = useCallback(() => {
+    if (previewIndex > 0) {
+      setPreviewIndex(prev => prev - 1);
+    }
+  }, [previewIndex]);
+
+  const downloadImage = useCallback((image: ImageFile) => {
+    const link = document.createElement('a');
+    link.href = image.url;
+    link.download = image.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Download started",
+      description: `Downloading ${image.name}`,
+    });
+  }, [toast]);
 
   const sortedImages = useMemo(() => {
     if (isShuffled) {
@@ -352,12 +392,13 @@ const Index = () => {
               {sortedImages.map((image, index) => (
                 <Card 
                   key={image.id} 
-                  className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 ${
+                  className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
                     isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                   }`}
                   style={{
                     animationDelay: `${index * 50}ms`
                   }}
+                  onClick={() => openPreview(index)}
                 >
                   <div className="relative group">
                     <img
@@ -377,6 +418,17 @@ const Index = () => {
             </div>
           )}
         </div>
+
+        {/* Image Preview */}
+        <ImagePreview
+          images={sortedImages}
+          currentIndex={previewIndex}
+          isOpen={isPreviewOpen}
+          onClose={closePreview}
+          onNext={goToNextImage}
+          onPrevious={goToPreviousImage}
+          onDownload={downloadImage}
+        />
 
         {/* Hidden file input */}
         <input
@@ -562,12 +614,13 @@ const Index = () => {
             {sortedImages.map((image, index) => (
               <Card 
                 key={image.id} 
-                className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 ${
+                className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
                   isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                 }`}
                 style={{
                   animationDelay: `${index * 50}ms`
                 }}
+                onClick={() => openPreview(index)}
               >
                 <div className="relative group">
                   <img
@@ -586,6 +639,17 @@ const Index = () => {
             ))}
           </div>
         )}
+
+        {/* Image Preview */}
+        <ImagePreview
+          images={sortedImages}
+          currentIndex={previewIndex}
+          isOpen={isPreviewOpen}
+          onClose={closePreview}
+          onNext={goToNextImage}
+          onPrevious={goToPreviousImage}
+          onDownload={downloadImage}
+        />
 
         {/* Hidden file input */}
         <input
