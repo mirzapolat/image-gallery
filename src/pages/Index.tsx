@@ -471,89 +471,100 @@ const Index = () => {
         <Card className={`p-4 mb-8 border-0 shadow-lg backdrop-blur-sm ${
           isDarkMode ? 'bg-gray-800/80 text-white' : 'bg-white/80'
         }`}>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Button 
-                onClick={handleImportImages}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <Import size={20} />
-                Import Images
-              </Button>
-              
-              <Button 
-                onClick={shuffleImages}
-                disabled={images.length === 0}
-                variant="outline"
-                className={`flex items-center gap-2 ${
-                  isDarkMode 
-                    ? 'border-purple-400 hover:border-purple-300 hover:bg-purple-900/50 text-white' 
-                    : 'border-purple-200 hover:border-purple-300 hover:bg-purple-50'
-                }`}
-              >
-                <Shuffle size={20} />
-                Shuffle
-              </Button>
-
-              <Button 
-                onClick={handleReset}
-                disabled={images.length === 0}
-                variant="outline"
-                className={`flex items-center gap-2 ${
-                  isDarkMode 
-                    ? 'border-red-400 hover:border-red-300 hover:bg-red-900/50 text-white' 
-                    : 'border-red-200 hover:border-red-300 hover:bg-red-50'
-                }`}
-              >
-                <RotateCcw size={20} />
-                Reset
-              </Button>
-
-              <Button 
-                onClick={toggleFullscreen}
-                variant="outline"
-                className={`flex items-center gap-2 ${
-                  isDarkMode 
-                    ? 'border-green-400 hover:border-green-300 hover:bg-green-900/50 text-white' 
-                    : 'border-green-200 hover:border-green-300 hover:bg-green-50'
-                }`}
-              >
-                <Maximize size={20} />
-                Fullscreen
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Sort by:
-                </span>
-                <Select value={sortCriteria} onValueChange={handleSortChange}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name">Name</SelectItem>
-                    <SelectItem value="date">Date</SelectItem>
-                    <SelectItem value="size">Size</SelectItem>
-                    <SelectItem value="type">Type</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Button
-                  onClick={toggleSortOrder}
-                  variant="outline"
-                  size="sm"
-                  className="p-2"
+          <div className="space-y-4">
+            {/* First Row: Main Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button 
+                  onClick={handleImportImages}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
+                  <Import size={20} />
+                  <span className="hidden sm:inline">Import Images</span>
                 </Button>
+                
+                <Button 
+                  onClick={shuffleImages}
+                  disabled={images.length === 0}
+                  variant="outline"
+                  className={`flex items-center gap-2 ${
+                    isDarkMode 
+                      ? 'border-purple-400 hover:border-purple-300 hover:bg-purple-900/50 text-white' 
+                      : 'border-purple-200 hover:border-purple-300 hover:bg-purple-50'
+                  }`}
+                >
+                  <Shuffle size={20} />
+                  <span className="hidden sm:inline">Shuffle</span>
+                </Button>
+
+                <Button 
+                  onClick={handleReset}
+                  disabled={images.length === 0}
+                  variant="outline"
+                  className={`flex items-center gap-2 ${
+                    isDarkMode 
+                      ? 'border-red-400 hover:border-red-300 hover:bg-red-900/50 text-white' 
+                      : 'border-red-200 hover:border-red-300 hover:bg-red-50'
+                  }`}
+                >
+                  <RotateCcw size={20} />
+                  <span className="hidden sm:inline">Reset</span>
+                </Button>
+
+                <Button 
+                  onClick={toggleFullscreen}
+                  variant="outline"
+                  className={`flex items-center gap-2 ${
+                    isDarkMode 
+                      ? 'border-green-400 hover:border-green-300 hover:bg-green-900/50 text-white' 
+                      : 'border-green-200 hover:border-green-300 hover:bg-green-50'
+                  }`}
+                >
+                  <Maximize size={20} />
+                  <span className="hidden sm:inline">Fullscreen</span>
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium hidden sm:inline ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Sort by:
+                  </span>
+                  <Select value={sortCriteria} onValueChange={handleSortChange}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Name</SelectItem>
+                      <SelectItem value="date">Date</SelectItem>
+                      <SelectItem value="size">Size</SelectItem>
+                      <SelectItem value="type">Type</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <Button
+                    onClick={toggleSortOrder}
+                    variant="outline"
+                    size="sm"
+                    className="p-2"
+                  >
+                    {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
+                  </Button>
+                </div>
               </div>
 
+              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {images.length} images
+              </div>
+            </div>
+
+            {/* Second Row: Sliders */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {/* Column Count Slider - Left */}
               <div className="flex items-center gap-2">
                 <span className={`text-sm font-medium whitespace-nowrap flex items-center gap-1 ${
                   isDarkMode ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   <Columns size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
-                  Columns:
+                  <span className="hidden sm:inline">Columns:</span>
                 </span>
                 <div className="w-32">
                   <Slider 
@@ -569,21 +580,17 @@ const Index = () => {
                   {columnCount}
                 </span>
               </div>
-            </div>
 
-            {/* Dark mode toggle moved to the right */}
-            <div className="flex items-center gap-2 ml-auto">
-              <Sun size={20} className={isDarkMode ? 'text-gray-400' : 'text-yellow-500'} />
-              <Switch 
-                checked={isDarkMode} 
-                onCheckedChange={setIsDarkMode}
-                className="data-[state=checked]:bg-blue-600"
-              />
-              <Moon size={20} className={isDarkMode ? 'text-blue-400' : 'text-gray-400'} />
-            </div>
-            
-            <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              {images.length} images
+              {/* Dark Mode Toggle - Right */}
+              <div className="flex items-center gap-2">
+                <Sun size={20} className={isDarkMode ? 'text-gray-400' : 'text-yellow-500'} />
+                <Switch 
+                  checked={isDarkMode} 
+                  onCheckedChange={setIsDarkMode}
+                  className="data-[state=checked]:bg-blue-600"
+                />
+                <Moon size={20} className={isDarkMode ? 'text-blue-400' : 'text-gray-400'} />
+              </div>
             </div>
           </div>
         </Card>
