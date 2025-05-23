@@ -164,7 +164,8 @@ const Index = () => {
       
       // Calculate the height this image will take based on its aspect ratio and the dynamic width
       const calculatedHeight = Math.round(imageWidth / image.aspectRatio);
-      const totalCardHeight = calculatedHeight + 32; // +32 for padding/borders
+      // Remove the arbitrary 32px padding - let the actual card determine its own height
+      const totalCardHeight = calculatedHeight;
       
       const positionedImage: PositionedImage = {
         ...image,
@@ -174,7 +175,7 @@ const Index = () => {
         calculatedWidth: imageWidth,
       };
 
-      // Update the column height - add gap for vertical spacing to match horizontal gap
+      // Update the column height - add gap for consistent spacing that matches horizontal gaps
       columnHeights[shortestColumnIndex] += totalCardHeight + gap;
 
       return positionedImage;
