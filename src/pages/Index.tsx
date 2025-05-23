@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -30,6 +31,7 @@ const Index = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounterRef = useRef(0);
   const { toast } = useToast();
 
   // Apply dark mode to document
@@ -101,20 +103,35 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [images.length, isFullscreen]);
 
-  // Drag and drop functionality
-  const handleDragOver = useCallback((event: React.DragEvent) => {
+  // Improved drag and drop functionality with proper event handling
+  const handleDragEnter = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    setIsDragOver(true);
+    event.stopPropagation();
+    dragCounterRef.current++;
+    if (event.dataTransfer.items && event.dataTransfer.items.length > 0) {
+      setIsDragOver(true);
+    }
   }, []);
 
   const handleDragLeave = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    setIsDragOver(false);
+    event.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragOver(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
   }, []);
 
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     setIsDragOver(false);
+    dragCounterRef.current = 0;
     
     const files = event.dataTransfer.files;
     if (!files) return;
@@ -185,8 +202,16 @@ const Index = () => {
     }
   }, [toast]);
 
+  // Optimized shuffle function using Fisher-Yates algorithm
   const shuffleImages = useCallback(() => {
-    setImages(prev => [...prev].sort(() => Math.random() - 0.5));
+    setImages(prev => {
+      const shuffled = [...prev];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    });
     setIsShuffled(true);
     toast({
       title: "Images shuffled",
@@ -273,8 +298,9 @@ const Index = () => {
             ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
             : 'bg-gradient-to-br from-gray-50 to-gray-100'
         } ${isDragOver ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
         {/* Drag overlay */}
@@ -372,8 +398,9 @@ const Index = () => {
           ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
           : 'bg-gradient-to-br from-gray-50 to-gray-100'
       } ${isDragOver ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
-      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
       <div className="max-w-7xl mx-auto">
