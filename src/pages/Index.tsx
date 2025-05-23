@@ -1,8 +1,10 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shuffle, Import, SortAsc, SortDesc, Columns } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Shuffle, Import, SortAsc, SortDesc, Columns, RotateCcw, Moon, Sun } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
 
@@ -25,9 +27,109 @@ const Index = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [isShuffling, setIsShuffling] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
-  const [columnCount, setColumnCount] = useState(5); // Default: 5 columns
+  const [columnCount, setColumnCount] = useState(5);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Apply dark mode to document
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  // Hotkeys
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (event.key.toLowerCase()) {
+        case 'i':
+          event.preventDefault();
+          handleImportImages();
+          break;
+        case 's':
+          event.preventDefault();
+          if (images.length > 0) {
+            shuffleImages();
+          }
+          break;
+        case 'r':
+          event.preventDefault();
+          handleReset();
+          break;
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+          event.preventDefault();
+          setColumnCount(parseInt(event.key));
+          break;
+        case '0':
+          event.preventDefault();
+          setColumnCount(10);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [images.length]);
+
+  // Drag and drop functionality
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    
+    const files = event.dataTransfer.files;
+    if (!files) return;
+
+    const imageFiles: ImageFile[] = [];
+    
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        const imageFile: ImageFile = {
+          id: Math.random().toString(36).substr(2, 9),
+          file,
+          url: URL.createObjectURL(file),
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          dateModified: file.lastModified,
+        };
+        imageFiles.push(imageFile);
+      }
+    });
+
+    if (imageFiles.length > 0) {
+      setImages(prev => [...prev, ...imageFiles]);
+      setIsShuffled(false);
+      toast({
+        title: "Images added",
+        description: `Successfully added ${imageFiles.length} images via drag & drop`,
+      });
+    }
+  }, [toast]);
 
   const handleImportImages = useCallback(() => {
     if (fileInputRef.current) {
@@ -57,13 +159,12 @@ const Index = () => {
     });
 
     setImages(prev => [...prev, ...imageFiles]);
-    setIsShuffled(false); // Reset shuffle state when adding new images
+    setIsShuffled(false);
     toast({
       title: "Images imported",
       description: `Successfully imported ${imageFiles.length} images`,
     });
 
-    // Reset the input value to allow re-importing the same files
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -74,20 +175,37 @@ const Index = () => {
     setTimeout(() => {
       setImages(prev => [...prev].sort(() => Math.random() - 0.5));
       setIsShuffled(true);
-      setIsShuffling(false);
-      toast({
-        title: "Images shuffled",
-        description: "Gallery order has been randomized",
-      });
-    }, 300);
+      setTimeout(() => {
+        setIsShuffling(false);
+        toast({
+          title: "Images shuffled",
+          description: "Gallery order has been randomized",
+        });
+      }, 100);
+    }, 800);
   }, [toast]);
+
+  const handleReset = useCallback(() => {
+    // Clean up object URLs to prevent memory leaks
+    images.forEach(image => URL.revokeObjectURL(image.url));
+    
+    setImages([]);
+    setIsShuffled(false);
+    setSortCriteria('name');
+    setSortOrder('asc');
+    setColumnCount(5);
+    
+    toast({
+      title: "Gallery reset",
+      description: "All images have been removed",
+    });
+  }, [images, toast]);
 
   const handleColumnCountChange = useCallback((value: number[]) => {
     setColumnCount(value[0]);
   }, []);
 
   const sortedImages = useMemo(() => {
-    // If images are shuffled, don't apply sorting
     if (isShuffled) {
       return [...images];
     }
@@ -118,12 +236,12 @@ const Index = () => {
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-    setIsShuffled(false); // Reset shuffle state when changing sort order
+    setIsShuffled(false);
   };
 
   const handleSortChange = (value: SortCriteria) => {
     setSortCriteria(value);
-    setIsShuffled(false); // Reset shuffle state when changing sort criteria
+    setIsShuffled(false);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -135,37 +253,95 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4">
+    <div 
+      className={`min-h-screen transition-colors duration-300 p-4 ${
+        isDarkMode 
+          ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
+          : 'bg-gradient-to-br from-gray-50 to-gray-100'
+      } ${isDragOver ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="max-w-7xl mx-auto">
+        {/* Drag overlay */}
+        {isDragOver && (
+          <div className="fixed inset-0 bg-blue-500/20 border-4 border-dashed border-blue-500 z-50 flex items-center justify-center">
+            <div className="text-center">
+              <Import size={48} className="mx-auto mb-4 text-blue-500" />
+              <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">Drop images here</p>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Gallery Viewer</h1>
-          <p className="text-gray-600">Import and browse your images in a beautiful waterfall layout</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className={`text-4xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+              Gallery Viewer
+            </h1>
+            <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+              Import and browse your images in a beautiful waterfall layout
+            </p>
+          </div>
+          
+          {/* Dark mode toggle */}
+          <div className="flex items-center gap-2">
+            <Sun size={20} className={isDarkMode ? 'text-gray-400' : 'text-yellow-500'} />
+            <Switch 
+              checked={isDarkMode} 
+              onCheckedChange={setIsDarkMode}
+              className="data-[state=checked]:bg-blue-600"
+            />
+            <Moon size={20} className={isDarkMode ? 'text-blue-400' : 'text-gray-400'} />
+          </div>
         </div>
 
         {/* Controls */}
-        <Card className="p-6 mb-8 bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+        <Card className={`p-6 mb-8 border-0 shadow-lg backdrop-blur-sm ${
+          isDarkMode ? 'bg-gray-800/80 text-white' : 'bg-white/80'
+        }`}>
           <div className="flex flex-wrap items-center gap-4">
             <Button 
               onClick={handleImportImages}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Import size={20} />
-              Import Images
+              Import Images (I)
             </Button>
             
             <Button 
               onClick={shuffleImages}
               disabled={images.length === 0 || isShuffling}
               variant="outline"
-              className="flex items-center gap-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50"
+              className={`flex items-center gap-2 ${
+                isDarkMode 
+                  ? 'border-purple-400 hover:border-purple-300 hover:bg-purple-900/50 text-white' 
+                  : 'border-purple-200 hover:border-purple-300 hover:bg-purple-50'
+              }`}
             >
               <Shuffle size={20} className={isShuffling ? 'animate-spin' : ''} />
-              Shuffle
+              {isShuffling ? 'Shuffling...' : 'Shuffle (S)'}
+            </Button>
+
+            <Button 
+              onClick={handleReset}
+              disabled={images.length === 0}
+              variant="outline"
+              className={`flex items-center gap-2 ${
+                isDarkMode 
+                  ? 'border-red-400 hover:border-red-300 hover:bg-red-900/50 text-white' 
+                  : 'border-red-200 hover:border-red-300 hover:bg-red-50'
+              }`}
+            >
+              <RotateCcw size={20} />
+              Reset (R)
             </Button>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Sort by:</span>
+              <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Sort by:
+              </span>
               <Select value={sortCriteria} onValueChange={handleSortChange}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
@@ -189,9 +365,11 @@ const Index = () => {
             </div>
 
             <div className="flex items-center gap-2 ml-4">
-              <span className="text-sm font-medium text-gray-700 whitespace-nowrap flex items-center gap-1">
-                <Columns size={16} className="text-gray-500" />
-                Columns:
+              <span className={`text-sm font-medium whitespace-nowrap flex items-center gap-1 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
+                <Columns size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
+                Columns (3-0):
               </span>
               <div className="w-32">
                 <Slider 
@@ -200,24 +378,47 @@ const Index = () => {
                   max={10} 
                   step={1}
                   onValueChange={handleColumnCountChange}
+                  value={[columnCount]}
                 />
               </div>
-              <span className="text-xs text-gray-500 w-8">{columnCount}</span>
+              <span className={`text-xs w-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {columnCount}
+              </span>
             </div>
 
-            <div className="text-sm text-gray-500 ml-auto">
+            <div className={`text-sm ml-auto ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               {images.length} images
             </div>
           </div>
         </Card>
 
+        {/* Shuffling overlay */}
+        {isShuffling && (
+          <div className="fixed inset-0 bg-black/20 z-40 flex items-center justify-center backdrop-blur-sm">
+            <div className={`p-6 rounded-lg shadow-xl ${
+              isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 border-3 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-lg font-medium">Shuffling images...</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Gallery */}
         {sortedImages.length === 0 ? (
-          <Card className="p-12 text-center bg-white/60 backdrop-blur-sm border-2 border-dashed border-gray-300">
-            <div className="text-gray-500">
-              <Import size={48} className="mx-auto mb-4 text-gray-400" />
+          <Card className={`p-12 text-center border-2 border-dashed backdrop-blur-sm ${
+            isDarkMode 
+              ? 'bg-gray-800/60 border-gray-600 text-gray-300' 
+              : 'bg-white/60 border-gray-300 text-gray-500'
+          }`}>
+            <div>
+              <Import size={48} className={`mx-auto mb-4 ${
+                isDarkMode ? 'text-gray-500' : 'text-gray-400'
+              }`} />
               <h3 className="text-xl font-semibold mb-2">No images imported</h3>
-              <p>Click "Import Images" to select images from your computer</p>
+              <p>Click "Import Images", press "I", or drag & drop images to get started</p>
             </div>
           </Card>
         ) : (
@@ -232,9 +433,9 @@ const Index = () => {
             {sortedImages.map((image, index) => (
               <Card 
                 key={image.id} 
-                className={`mb-4 break-inside-avoid bg-white shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 ${
-                  isShuffling ? 'animate-pulse' : ''
-                }`}
+                className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 ${
+                  isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
+                } ${isShuffling ? 'opacity-50' : 'opacity-100'}`}
                 style={{
                   animationDelay: `${index * 50}ms`
                 }}
