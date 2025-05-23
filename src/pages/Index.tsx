@@ -36,6 +36,36 @@ const Index = () => {
   const dragCounterRef = useRef(0);
   const { toast } = useToast();
 
+  // Calculate sortedImages first so it can be used in other callbacks
+  const sortedImages = useMemo(() => {
+    if (isShuffled) {
+      return [...images];
+    }
+    
+    const sorted = [...images].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortCriteria) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'date':
+          comparison = a.dateModified - b.dateModified;
+          break;
+        case 'size':
+          comparison = a.size - b.size;
+          break;
+        case 'type':
+          comparison = a.type.localeCompare(b.type);
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    return sorted;
+  }, [images, sortCriteria, sortOrder, isShuffled]);
+
   // Apply dark mode to document
   useEffect(() => {
     if (isDarkMode) {
@@ -282,35 +312,6 @@ const Index = () => {
       description: `Downloading ${image.name}`,
     });
   }, [toast]);
-
-  const sortedImages = useMemo(() => {
-    if (isShuffled) {
-      return [...images];
-    }
-    
-    const sorted = [...images].sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortCriteria) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case 'date':
-          comparison = a.dateModified - b.dateModified;
-          break;
-        case 'size':
-          comparison = a.size - b.size;
-          break;
-        case 'type':
-          comparison = a.type.localeCompare(b.type);
-          break;
-      }
-      
-      return sortOrder === 'asc' ? comparison : -comparison;
-    });
-    
-    return sorted;
-  }, [images, sortCriteria, sortOrder, isShuffled]);
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
