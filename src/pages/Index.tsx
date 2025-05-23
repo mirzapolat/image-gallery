@@ -221,11 +221,14 @@ const Index = () => {
             </div>
           </Card>
         ) : (
-          <div className="gap-4 space-y-0" 
+          <div 
+            className="gap-4" 
             style={{ 
               columnCount: columnCount, 
-              columnGap: '1rem'
-            }}>
+              columnGap: '1rem',
+              columnFill: 'balance'
+            }}
+          >
             {sortedImages.map((image, index) => (
               <Card 
                 key={image.id} 
