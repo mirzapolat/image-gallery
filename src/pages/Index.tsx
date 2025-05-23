@@ -29,6 +29,7 @@ interface PositionedImage extends ImageWithDimensions {
   column: number;
   top: number;
   calculatedHeight: number;
+  calculatedWidth: number;
 }
 
 type SortCriteria = 'name' | 'date' | 'size' | 'type';
@@ -134,34 +135,39 @@ const Index = () => {
     return sorted;
   }, [filteredImages, sortCriteria, sortOrder, isShuffled]);
 
-  // Calculate waterfall layout positions
+  // Calculate waterfall layout positions with dynamic sizing
   const calculateWaterfallLayout = useCallback((images: ImageWithDimensions[], columnCount: number): PositionedImage[] => {
     if (images.length === 0) return [];
 
+    const gap = 16; // consistent gap between images both horizontally and vertically
+    const containerMaxWidth = isFullscreen ? window.innerWidth - 32 : 1280; // max-w-7xl equivalent
+    const availableWidth = containerMaxWidth - (gap * (columnCount - 1));
+    const imageWidth = Math.floor(availableWidth / columnCount);
+
     const columnHeights = new Array(columnCount).fill(0);
-    const gap = 16; // 1rem gap between images
-    const cardWidth = 300; // Base width for calculations
 
     return images.map((image) => {
       // Find the column with the smallest height
       const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
       
-      // Calculate the height this image will take in the layout
-      const calculatedHeight = Math.round((cardWidth / image.aspectRatio) + 32); // +32 for padding/borders
+      // Calculate the height this image will take based on its aspect ratio and the dynamic width
+      const calculatedHeight = Math.round(imageWidth / image.aspectRatio);
+      const totalCardHeight = calculatedHeight + 32; // +32 for padding/borders
       
       const positionedImage: PositionedImage = {
         ...image,
         column: shortestColumnIndex,
         top: columnHeights[shortestColumnIndex],
-        calculatedHeight,
+        calculatedHeight: totalCardHeight,
+        calculatedWidth: imageWidth,
       };
 
       // Update the column height
-      columnHeights[shortestColumnIndex] += calculatedHeight + gap;
+      columnHeights[shortestColumnIndex] += totalCardHeight + gap;
 
       return positionedImage;
     });
-  }, []);
+  }, [isFullscreen]);
 
   // Update positioned images when sorted images or column count changes
   useEffect(() => {
@@ -449,6 +455,13 @@ const Index = () => {
     return Math.max(...columnHeights);
   }, [positionedImages, columnCount]);
 
+  const containerWidth = useMemo(() => {
+    if (positionedImages.length === 0) return 0;
+    const gap = 16;
+    const imageWidth = positionedImages[0]?.calculatedWidth || 300;
+    return (imageWidth * columnCount) + (gap * (columnCount - 1));
+  }, [positionedImages, columnCount]);
+
   if (isFullscreen) {
     return (
       <div 
@@ -504,7 +517,7 @@ const Index = () => {
               className="relative mx-auto"
               style={{ 
                 height: `${containerHeight}px`,
-                maxWidth: `${columnCount * 320}px` // 300px + 20px gap
+                width: `${containerWidth}px`
               }}
             >
               {positionedImages.map((image, index) => (
@@ -514,9 +527,9 @@ const Index = () => {
                     isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                   }`}
                   style={{
-                    left: `${image.column * 320}px`, // 300px width + 20px gap
+                    left: `${image.column * (image.calculatedWidth + 16)}px`,
                     top: `${image.top}px`,
-                    width: '300px',
+                    width: `${image.calculatedWidth}px`,
                     animationDelay: `${index * 50}ms`
                   }}
                   onClick={() => openPreview(index)}
@@ -781,7 +794,7 @@ const Index = () => {
             className="relative mx-auto"
             style={{ 
               height: `${containerHeight}px`,
-              maxWidth: `${columnCount * 320}px` // 300px + 20px gap
+              width: `${containerWidth}px`
             }}
           >
             {positionedImages.map((image, index) => (
@@ -791,9 +804,9 @@ const Index = () => {
                   isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                 }`}
                 style={{
-                  left: `${image.column * 320}px`, // 300px width + 20px gap
+                  left: `${image.column * (image.calculatedWidth + 16)}px`,
                   top: `${image.top}px`,
-                  width: '300px',
+                  width: `${image.calculatedWidth}px`,
                   animationDelay: `${index * 50}ms`
                 }}
                 onClick={() => openPreview(index)}
