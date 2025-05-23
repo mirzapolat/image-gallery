@@ -140,7 +140,7 @@ const Index = () => {
     if (images.length === 0) return [];
 
     const gap = 16; // consistent gap between images both horizontally and vertically
-    const containerMaxWidth = isFullscreen ? window.innerWidth - 32 : 1280; // max-w-7xl equivalent
+    const containerMaxWidth = isFullscreen ? window.innerWidth - 32 : 1280; // max-w-7xl equivalent or fullscreen
     const availableWidth = containerMaxWidth - (gap * (columnCount - 1));
     const imageWidth = Math.floor(availableWidth / columnCount);
 
