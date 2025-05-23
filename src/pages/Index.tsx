@@ -1,9 +1,10 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Shuffle, Import, SortAsc, SortDesc, Columns, RotateCcw, Moon, Sun, Maximize, Minimize } from 'lucide-react';
+import { Shuffle, Import, SortAsc, SortDesc, Columns, RotateCcw, Moon, Sun, Maximize, Minimize, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
 import ImagePreview from '@/components/ImagePreview';
@@ -23,6 +24,7 @@ type SortOrder = 'asc' | 'desc';
 
 const Index = () => {
   const [images, setImages] = useState<ImageFile[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [isShuffled, setIsShuffled] = useState(false);
@@ -36,13 +38,23 @@ const Index = () => {
   const dragCounterRef = useRef(0);
   const { toast } = useToast();
 
-  // Calculate sortedImages first so it can be used in other callbacks
+  // Filter images based on search term
+  const filteredImages = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return images;
+    }
+    return images.filter(image => 
+      image.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [images, searchTerm]);
+
+  // Calculate sortedImages using filtered images
   const sortedImages = useMemo(() => {
     if (isShuffled) {
-      return [...images];
+      return [...filteredImages];
     }
     
-    const sorted = [...images].sort((a, b) => {
+    const sorted = [...filteredImages].sort((a, b) => {
       let comparison = 0;
       
       switch (sortCriteria) {
@@ -64,7 +76,7 @@ const Index = () => {
     });
     
     return sorted;
-  }, [images, sortCriteria, sortOrder, isShuffled]);
+  }, [filteredImages, sortCriteria, sortOrder, isShuffled]);
 
   // Apply dark mode to document
   useEffect(() => {
@@ -256,6 +268,7 @@ const Index = () => {
     images.forEach(image => URL.revokeObjectURL(image.url));
     
     setImages([]);
+    setSearchTerm('');
     setIsShuffled(false);
     setSortCriteria('name');
     setSortOrder('asc');
@@ -376,8 +389,8 @@ const Index = () => {
                   <Import size={48} className={`mx-auto mb-4 ${
                     isDarkMode ? 'text-gray-500' : 'text-gray-400'
                   }`} />
-                  <h3 className="text-xl font-semibold mb-2">No images imported</h3>
-                  <p>Press "I" or drag & drop images to get started</p>
+                  <h3 className="text-xl font-semibold mb-2">No images found</h3>
+                  <p>{searchTerm ? 'No images match your search' : 'Press "I" or drag & drop images to get started'}</p>
                 </div>
               </Card>
             </div>
@@ -468,7 +481,7 @@ const Index = () => {
         )}
 
         {/* Controls */}
-        <Card className={`p-4 mb-8 border-0 shadow-lg backdrop-blur-sm ${
+        <Card className={`p-4 mb-4 border-0 shadow-lg backdrop-blur-sm ${
           isDarkMode ? 'bg-gray-800/80 text-white' : 'bg-white/80'
         }`}>
           <div className="space-y-4">
@@ -595,6 +608,45 @@ const Index = () => {
           </div>
         </Card>
 
+        {/* Search Box */}
+        <Card className={`p-4 mb-8 border-0 shadow-lg backdrop-blur-sm ${
+          isDarkMode ? 'bg-gray-800/80 text-white' : 'bg-white/80'
+        }`}>
+          <div className="flex items-center gap-2">
+            <Search size={20} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
+            <Input
+              type="text"
+              placeholder="Search images by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`flex-1 ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder:text-gray-400' 
+                  : 'bg-white border-gray-300'
+              }`}
+            />
+            {searchTerm && (
+              <Button
+                onClick={() => setSearchTerm('')}
+                variant="outline"
+                size="sm"
+                className={`${
+                  isDarkMode 
+                    ? 'border-gray-600 hover:bg-gray-700 text-white' 
+                    : 'border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          {searchTerm && (
+            <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              Showing {sortedImages.length} of {images.length} images
+            </p>
+          )}
+        </Card>
+
         {/* Gallery */}
         {sortedImages.length === 0 ? (
           <Card className={`p-12 text-center border-2 border-dashed backdrop-blur-sm ${
@@ -606,8 +658,15 @@ const Index = () => {
               <Import size={48} className={`mx-auto mb-4 ${
                 isDarkMode ? 'text-gray-500' : 'text-gray-400'
               }`} />
-              <h3 className="text-xl font-semibold mb-2">No images imported</h3>
-              <p>Click "Import Images", press "I", or drag & drop images to get started</p>
+              <h3 className="text-xl font-semibold mb-2">
+                {searchTerm ? 'No images found' : 'No images imported'}
+              </h3>
+              <p>
+                {searchTerm 
+                  ? 'No images match your search criteria' 
+                  : 'Click "Import Images", press "I", or drag & drop images to get started'
+                }
+              </p>
             </div>
           </Card>
         ) : (
