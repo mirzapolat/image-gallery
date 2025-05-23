@@ -116,19 +116,19 @@ const Index = () => {
         calculatedHeight = cardWidth * aspectRatio;
       }
 
-      // Find the shortest column for true waterfall effect
-      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      // For left-to-right flow, cycle through columns in order
+      const targetColumn = index % columnCount;
       
       layoutItems.push({
         image,
         originalIndex: index,
-        column: shortestColumnIndex,
-        top: columnHeights[shortestColumnIndex],
+        column: targetColumn,
+        top: columnHeights[targetColumn],
         height: calculatedHeight
       });
 
       // Update column height
-      columnHeights[shortestColumnIndex] += calculatedHeight + 16; // Add gap
+      columnHeights[targetColumn] += calculatedHeight + 16; // Add gap
     });
 
     return layoutItems;
