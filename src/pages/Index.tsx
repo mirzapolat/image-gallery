@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Shuffle, Import, SortAsc, SortDesc, Columns, RotateCcw, Moon, Sun } from 'lucide-react';
+import { Shuffle, Import, SortAsc, SortDesc, Columns, RotateCcw, Moon, Sun, Maximize, Minimize } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
 
@@ -28,6 +28,7 @@ const Index = () => {
   const [columnCount, setColumnCount] = useState(5);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -63,6 +64,16 @@ const Index = () => {
           event.preventDefault();
           handleReset();
           break;
+        case 'f':
+          event.preventDefault();
+          toggleFullscreen();
+          break;
+        case 'escape':
+          if (isFullscreen) {
+            event.preventDefault();
+            setIsFullscreen(false);
+          }
+          break;
         case '1':
         case '2':
         case '3':
@@ -84,7 +95,7 @@ const Index = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [images.length]);
+  }, [images.length, isFullscreen]);
 
   // Drag and drop functionality
   const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -199,6 +210,10 @@ const Index = () => {
     setColumnCount(value[0]);
   }, []);
 
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+  }, []);
+
   const sortedImages = useMemo(() => {
     if (isShuffled) {
       return [...images];
@@ -245,6 +260,106 @@ const Index = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  if (isFullscreen) {
+    return (
+      <div 
+        className={`fixed inset-0 z-50 transition-colors duration-300 p-4 ${
+          isDarkMode 
+            ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
+            : 'bg-gradient-to-br from-gray-50 to-gray-100'
+        } ${isDragOver ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {/* Drag overlay */}
+        {isDragOver && (
+          <div className="fixed inset-0 bg-blue-500/20 border-4 border-dashed border-blue-500 z-50 flex items-center justify-center">
+            <div className="text-center">
+              <Import size={48} className="mx-auto mb-4 text-blue-500" />
+              <p className="text-xl font-semibold text-blue-600 dark:text-blue-400">Drop images here</p>
+            </div>
+          </div>
+        )}
+
+        {/* Exit fullscreen button */}
+        <Button
+          onClick={toggleFullscreen}
+          className="fixed top-4 right-4 z-10 bg-black/20 hover:bg-black/40 backdrop-blur-sm border-0"
+          size="sm"
+        >
+          <Minimize size={16} />
+        </Button>
+
+        {/* Gallery only */}
+        <div className="h-full overflow-auto">
+          {sortedImages.length === 0 ? (
+            <div className="h-full flex items-center justify-center">
+              <Card className={`p-12 text-center border-2 border-dashed backdrop-blur-sm ${
+                isDarkMode 
+                  ? 'bg-gray-800/60 border-gray-600 text-gray-300' 
+                  : 'bg-white/60 border-gray-300 text-gray-500'
+              }`}>
+                <div>
+                  <Import size={48} className={`mx-auto mb-4 ${
+                    isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                  }`} />
+                  <h3 className="text-xl font-semibold mb-2">No images imported</h3>
+                  <p>Press "I" or drag & drop images to get started</p>
+                </div>
+              </Card>
+            </div>
+          ) : (
+            <div 
+              className="gap-4" 
+              style={{ 
+                columnCount: columnCount, 
+                columnGap: '1rem',
+                columnFill: 'balance'
+              }}
+            >
+              {sortedImages.map((image, index) => (
+                <Card 
+                  key={image.id} 
+                  className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 ${
+                    isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
+                  }`}
+                  style={{
+                    animationDelay: `${index * 50}ms`
+                  }}
+                >
+                  <div className="relative group">
+                    <img
+                      src={image.url}
+                      alt={image.name}
+                      className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-4">
+                      <p className="text-white text-sm font-medium truncate">{image.name}</p>
+                      <p className="text-white/80 text-xs">{formatFileSize(image.size)}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -330,6 +445,19 @@ const Index = () => {
             >
               <RotateCcw size={20} />
               Reset
+            </Button>
+
+            <Button 
+              onClick={toggleFullscreen}
+              variant="outline"
+              className={`flex items-center gap-2 ${
+                isDarkMode 
+                  ? 'border-green-400 hover:border-green-300 hover:bg-green-900/50 text-white' 
+                  : 'border-green-200 hover:border-green-300 hover:bg-green-50'
+              }`}
+            >
+              <Maximize size={20} />
+              Fullscreen
             </Button>
 
             <div className="flex items-center gap-2">
