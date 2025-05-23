@@ -78,6 +78,37 @@ const Index = () => {
     return sorted;
   }, [filteredImages, sortCriteria, sortOrder, isShuffled]);
 
+  // New function to calculate grid layout for waterfall effect
+  const calculateGridLayout = useMemo(() => {
+    if (sortedImages.length === 0) return { gridItems: [], gridHeight: 0 };
+
+    const columnHeights = new Array(columnCount).fill(0);
+    const gridItems = sortedImages.map((image, index) => {
+      // Find the shortest column
+      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      
+      // Estimate image height based on aspect ratio (fallback to square if unknown)
+      const estimatedHeight = 200; // Base height for grid calculation
+      
+      const gridItem = {
+        ...image,
+        originalIndex: index,
+        gridColumn: shortestColumnIndex + 1,
+        gridRowStart: Math.floor(columnHeights[shortestColumnIndex] / 20) + 1, // Rough grid row calculation
+      };
+      
+      // Update column height
+      columnHeights[shortestColumnIndex] += estimatedHeight + 16; // Add gap
+      
+      return gridItem;
+    });
+
+    return { 
+      gridItems, 
+      gridHeight: Math.max(...columnHeights)
+    };
+  }, [sortedImages, columnCount]);
+
   // Apply dark mode to document
   useEffect(() => {
     if (isDarkMode) {
@@ -290,8 +321,8 @@ const Index = () => {
     setIsFullscreen(prev => !prev);
   }, []);
 
-  const openPreview = useCallback((index: number) => {
-    setPreviewIndex(index);
+  const openPreview = useCallback((originalIndex: number) => {
+    setPreviewIndex(originalIndex);
     setIsPreviewOpen(true);
   }, []);
 
@@ -396,23 +427,25 @@ const Index = () => {
             </div>
           ) : (
             <div 
-              className="gap-4" 
+              className="grid gap-4"
               style={{ 
-                columnCount: columnCount, 
-                columnGap: '1rem',
-                columnFill: 'balance'
+                gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+                gridAutoRows: '20px'
               }}
             >
-              {sortedImages.map((image, index) => (
+              {calculateGridLayout.gridItems.map((image) => (
                 <Card 
                   key={image.id} 
-                  className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
+                  className={`shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
                     isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                   }`}
                   style={{
-                    animationDelay: `${index * 50}ms`
+                    gridColumn: image.gridColumn,
+                    gridRowStart: image.gridRowStart,
+                    gridRowEnd: 'span 10', // Approximate span, will be adjusted by content
+                    animationDelay: `${image.originalIndex * 50}ms`
                   }}
-                  onClick={() => openPreview(index)}
+                  onClick={() => openPreview(image.originalIndex)}
                 >
                   <div className="relative group">
                     <img
@@ -671,23 +704,25 @@ const Index = () => {
           </Card>
         ) : (
           <div 
-            className="gap-4" 
+            className="grid gap-4"
             style={{ 
-              columnCount: columnCount, 
-              columnGap: '1rem',
-              columnFill: 'balance'
+              gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+              gridAutoRows: '20px'
             }}
           >
-            {sortedImages.map((image, index) => (
+            {calculateGridLayout.gridItems.map((image) => (
               <Card 
                 key={image.id} 
-                className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
+                className={`shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
                   isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                 }`}
                 style={{
-                  animationDelay: `${index * 50}ms`
+                  gridColumn: image.gridColumn,
+                  gridRowStart: image.gridRowStart,
+                  gridRowEnd: 'span 10', // Approximate span, will be adjusted by content
+                  animationDelay: `${image.originalIndex * 50}ms`
                 }}
-                onClick={() => openPreview(index)}
+                onClick={() => openPreview(image.originalIndex)}
               >
                 <div className="relative group">
                   <img
