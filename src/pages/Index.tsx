@@ -19,11 +19,25 @@ interface ImageFile {
   dateModified: number;
 }
 
+interface ImageWithDimensions extends ImageFile {
+  width: number;
+  height: number;
+  aspectRatio: number;
+}
+
+interface PositionedImage extends ImageWithDimensions {
+  column: number;
+  top: number;
+  calculatedHeight: number;
+}
+
 type SortCriteria = 'name' | 'date' | 'size' | 'type';
 type SortOrder = 'asc' | 'desc';
 
 const Index = () => {
   const [images, setImages] = useState<ImageFile[]>([]);
+  const [imagesWithDimensions, setImagesWithDimensions] = useState<ImageWithDimensions[]>([]);
+  const [positionedImages, setPositionedImages] = useState<PositionedImage[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortCriteria, setSortCriteria] = useState<SortCriteria>('name');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
@@ -38,15 +52,57 @@ const Index = () => {
   const dragCounterRef = useRef(0);
   const { toast } = useToast();
 
+  // Load image dimensions
+  const loadImageDimensions = useCallback((imageFile: ImageFile): Promise<ImageWithDimensions> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        resolve({
+          ...imageFile,
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          aspectRatio: img.naturalWidth / img.naturalHeight,
+        });
+      };
+      img.onerror = () => {
+        // Fallback for images that fail to load
+        resolve({
+          ...imageFile,
+          width: 300,
+          height: 200,
+          aspectRatio: 1.5,
+        });
+      };
+      img.src = imageFile.url;
+    });
+  }, []);
+
+  // Update images with dimensions when images change
+  useEffect(() => {
+    const loadDimensions = async () => {
+      if (images.length === 0) {
+        setImagesWithDimensions([]);
+        return;
+      }
+
+      const imagesWithDims = await Promise.all(
+        images.map(loadImageDimensions)
+      );
+      setImagesWithDimensions(imagesWithDims);
+    };
+
+    loadDimensions();
+  }, [images, loadImageDimensions]);
+
   // Filter images based on search term
   const filteredImages = useMemo(() => {
     if (!searchTerm.trim()) {
-      return images;
+      return imagesWithDimensions;
     }
-    return images.filter(image => 
+    return imagesWithDimensions.filter(image => 
       image.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [images, searchTerm]);
+  }, [imagesWithDimensions, searchTerm]);
 
   // Calculate sortedImages using filtered images
   const sortedImages = useMemo(() => {
@@ -77,6 +133,41 @@ const Index = () => {
     
     return sorted;
   }, [filteredImages, sortCriteria, sortOrder, isShuffled]);
+
+  // Calculate waterfall layout positions
+  const calculateWaterfallLayout = useCallback((images: ImageWithDimensions[], columnCount: number): PositionedImage[] => {
+    if (images.length === 0) return [];
+
+    const columnHeights = new Array(columnCount).fill(0);
+    const gap = 16; // 1rem gap between images
+    const cardWidth = 300; // Base width for calculations
+
+    return images.map((image) => {
+      // Find the column with the smallest height
+      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      
+      // Calculate the height this image will take in the layout
+      const calculatedHeight = Math.round((cardWidth / image.aspectRatio) + 32); // +32 for padding/borders
+      
+      const positionedImage: PositionedImage = {
+        ...image,
+        column: shortestColumnIndex,
+        top: columnHeights[shortestColumnIndex],
+        calculatedHeight,
+      };
+
+      // Update the column height
+      columnHeights[shortestColumnIndex] += calculatedHeight + gap;
+
+      return positionedImage;
+    });
+  }, []);
+
+  // Update positioned images when sorted images or column count changes
+  useEffect(() => {
+    const positioned = calculateWaterfallLayout(sortedImages, columnCount);
+    setPositionedImages(positioned);
+  }, [sortedImages, columnCount, calculateWaterfallLayout]);
 
   // Apply dark mode to document
   useEffect(() => {
@@ -344,6 +435,20 @@ const Index = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const containerHeight = useMemo(() => {
+    if (positionedImages.length === 0) return 0;
+    
+    const columnHeights = new Array(columnCount).fill(0);
+    positionedImages.forEach((image) => {
+      const newHeight = image.top + image.calculatedHeight;
+      if (newHeight > columnHeights[image.column]) {
+        columnHeights[image.column] = newHeight;
+      }
+    });
+    
+    return Math.max(...columnHeights);
+  }, [positionedImages, columnCount]);
+
   if (isFullscreen) {
     return (
       <div 
@@ -378,7 +483,7 @@ const Index = () => {
 
         {/* Gallery only */}
         <div className="h-full overflow-auto">
-          {sortedImages.length === 0 ? (
+          {positionedImages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <Card className={`p-12 text-center border-2 border-dashed backdrop-blur-sm ${
                 isDarkMode 
@@ -396,20 +501,22 @@ const Index = () => {
             </div>
           ) : (
             <div 
-              className="gap-4" 
+              className="relative mx-auto"
               style={{ 
-                columnCount: columnCount, 
-                columnGap: '1rem',
-                columnFill: 'balance'
+                height: `${containerHeight}px`,
+                maxWidth: `${columnCount * 320}px` // 300px + 20px gap
               }}
             >
-              {sortedImages.map((image, index) => (
+              {positionedImages.map((image, index) => (
                 <Card 
                   key={image.id} 
-                  className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
+                  className={`absolute break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
                     isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                   }`}
                   style={{
+                    left: `${image.column * 320}px`, // 300px width + 20px gap
+                    top: `${image.top}px`,
+                    width: '300px',
                     animationDelay: `${index * 50}ms`
                   }}
                   onClick={() => openPreview(index)}
@@ -648,7 +755,7 @@ const Index = () => {
         </Card>
 
         {/* Gallery */}
-        {sortedImages.length === 0 ? (
+        {positionedImages.length === 0 ? (
           <Card className={`p-12 text-center border-2 border-dashed backdrop-blur-sm ${
             isDarkMode 
               ? 'bg-gray-800/60 border-gray-600 text-gray-300' 
@@ -671,20 +778,22 @@ const Index = () => {
           </Card>
         ) : (
           <div 
-            className="gap-4" 
+            className="relative mx-auto"
             style={{ 
-              columnCount: columnCount, 
-              columnGap: '1rem',
-              columnFill: 'balance'
+              height: `${containerHeight}px`,
+              maxWidth: `${columnCount * 320}px` // 300px + 20px gap
             }}
           >
-            {sortedImages.map((image, index) => (
+            {positionedImages.map((image, index) => (
               <Card 
                 key={image.id} 
-                className={`mb-4 break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
+                className={`absolute break-inside-avoid shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 cursor-pointer ${
                   isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white'
                 }`}
                 style={{
+                  left: `${image.column * 320}px`, // 300px width + 20px gap
+                  top: `${image.top}px`,
+                  width: '300px',
                   animationDelay: `${index * 50}ms`
                 }}
                 onClick={() => openPreview(index)}
