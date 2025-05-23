@@ -1,9 +1,8 @@
-
 import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Shuffle, Import, SortAsc, SortDesc, Maximize, Minimize } from 'lucide-react';
+import { Shuffle, Import, SortAsc, SortDesc, Columns } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Slider } from '@/components/ui/slider';
 
@@ -26,7 +25,7 @@ const Index = () => {
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const [isShuffling, setIsShuffling] = useState(false);
   const [isShuffled, setIsShuffled] = useState(false);
-  const [imageSize, setImageSize] = useState(100); // 100% is the default size
+  const [columnCount, setColumnCount] = useState(5); // Default: 5 columns
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -83,8 +82,8 @@ const Index = () => {
     }, 300);
   }, [toast]);
 
-  const handleImageSizeChange = useCallback((value: number[]) => {
-    setImageSize(value[0]);
+  const handleColumnCountChange = useCallback((value: number[]) => {
+    setColumnCount(value[0]);
   }, []);
 
   const sortedImages = useMemo(() => {
@@ -191,20 +190,19 @@ const Index = () => {
 
             <div className="flex items-center gap-2 ml-4">
               <span className="text-sm font-medium text-gray-700 whitespace-nowrap flex items-center gap-1">
-                <Minimize size={16} className="text-gray-500" />
-                Image Size:
-                <Maximize size={16} className="text-gray-500" />
+                <Columns size={16} className="text-gray-500" />
+                Columns:
               </span>
               <div className="w-32">
                 <Slider 
-                  defaultValue={[imageSize]} 
-                  min={50} 
-                  max={150} 
-                  step={10}
-                  onValueChange={handleImageSizeChange}
+                  defaultValue={[columnCount]} 
+                  min={3} 
+                  max={10} 
+                  step={1}
+                  onValueChange={handleColumnCountChange}
                 />
               </div>
-              <span className="text-xs text-gray-500 w-8">{imageSize}%</span>
+              <span className="text-xs text-gray-500 w-8">{columnCount}</span>
             </div>
 
             <div className="text-sm text-gray-500 ml-auto">
@@ -223,11 +221,15 @@ const Index = () => {
             </div>
           </Card>
         ) : (
-          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4 space-y-4">
+          <div className="gap-4 space-y-0" 
+            style={{ 
+              columnCount: columnCount, 
+              columnGap: '1rem'
+            }}>
             {sortedImages.map((image, index) => (
               <Card 
                 key={image.id} 
-                className={`break-inside-avoid bg-white shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 ${
+                className={`mb-4 break-inside-avoid bg-white shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-0 ${
                   isShuffling ? 'animate-pulse' : ''
                 }`}
                 style={{
@@ -239,7 +241,6 @@ const Index = () => {
                     src={image.url}
                     alt={image.name}
                     className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-105"
-                    style={{ width: `${imageSize}%`, margin: '0 auto' }}
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
