@@ -618,91 +618,90 @@ const Index = () => {
           isDarkMode ? 'bg-gray-800/80 text-white' : 'bg-white/80'
         }`}>
           <div className="space-y-4">
-            {/* First Row: Main Actions */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Button 
-                  onClick={handleImportImages}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Import size={20} />
-                  <span className="hidden sm:inline">Import Images</span>
-                </Button>
-                
-                <Button 
-                  onClick={shuffleImages}
-                  disabled={images.length === 0}
-                  variant="outline"
-                  className={`flex items-center gap-2 ${
-                    isDarkMode 
-                      ? 'border-purple-400 hover:border-purple-300 hover:bg-purple-900/50 text-white' 
-                      : 'border-purple-200 hover:border-purple-300 hover:bg-purple-50'
-                  }`}
-                >
-                  <Shuffle size={20} />
-                  <span className="hidden sm:inline">Shuffle</span>
-                </Button>
+            {/* First Row: Main Actions - Full Width Buttons */}
+            <div className="grid grid-cols-4 gap-4">
+              <Button 
+                onClick={handleImportImages}
+                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Import size={20} />
+                <span className="hidden sm:inline">Import</span>
+              </Button>
+              
+              <Button 
+                onClick={handleReset}
+                disabled={images.length === 0}
+                variant="outline"
+                className={`flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'border-red-400 hover:border-red-300 hover:bg-red-900/50 text-white' 
+                    : 'border-red-200 hover:border-red-300 hover:bg-red-50'
+                }`}
+              >
+                <RotateCcw size={20} />
+                <span className="hidden sm:inline">Reset</span>
+              </Button>
 
-                <Button 
-                  onClick={handleReset}
-                  disabled={images.length === 0}
-                  variant="outline"
-                  className={`flex items-center gap-2 ${
-                    isDarkMode 
-                      ? 'border-red-400 hover:border-red-300 hover:bg-red-900/50 text-white' 
-                      : 'border-red-200 hover:border-red-300 hover:bg-red-50'
-                  }`}
-                >
-                  <RotateCcw size={20} />
-                  <span className="hidden sm:inline">Reset</span>
-                </Button>
+              <Button 
+                onClick={toggleFullscreen}
+                variant="outline"
+                className={`flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'border-green-400 hover:border-green-300 hover:bg-green-900/50 text-white' 
+                    : 'border-green-200 hover:border-green-300 hover:bg-green-50'
+                }`}
+              >
+                <Maximize size={20} />
+                <span className="hidden sm:inline">Fullscreen</span>
+              </Button>
 
-                <Button 
-                  onClick={toggleFullscreen}
-                  variant="outline"
-                  className={`flex items-center gap-2 ${
-                    isDarkMode 
-                      ? 'border-green-400 hover:border-green-300 hover:bg-green-900/50 text-white' 
-                      : 'border-green-200 hover:border-green-300 hover:bg-green-50'
-                  }`}
-                >
-                  <Maximize size={20} />
-                  <span className="hidden sm:inline">Fullscreen</span>
-                </Button>
-
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium hidden sm:inline ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Sort by:
-                  </span>
-                  <Select value={sortCriteria} onValueChange={handleSortChange}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="name">Name</SelectItem>
-                      <SelectItem value="date">Date</SelectItem>
-                      <SelectItem value="size">Size</SelectItem>
-                      <SelectItem value="type">Type</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Button
-                    onClick={toggleSortOrder}
-                    variant="outline"
-                    size="sm"
-                    className="p-2"
-                  >
-                    {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
-                  </Button>
-                </div>
-              </div>
-
-              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {images.length} images
-              </div>
+              <Button 
+                onClick={shuffleImages}
+                disabled={images.length === 0}
+                variant="outline"
+                className={`flex items-center justify-center gap-2 ${
+                  isDarkMode 
+                    ? 'border-purple-400 hover:border-purple-300 hover:bg-purple-900/50 text-white' 
+                    : 'border-purple-200 hover:border-purple-300 hover:bg-purple-50'
+                }`}
+              >
+                <Shuffle size={20} />
+                <span className="hidden sm:inline">Shuffle</span>
+              </Button>
             </div>
 
-            {/* Second Row: Sliders and Controls */}
+            {/* Second Row: Sort Controls and Image Count */}
+            <div className="flex items-center justify-between gap-4">
+              {/* Sort Controls - Left Side */}
+              <div className="flex items-center gap-2 flex-1">
+                <span className={`text-sm font-medium whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Sort by:
+                </span>
+                <Select value={sortCriteria} onValueChange={handleSortChange}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="date">Date</SelectItem>
+                    <SelectItem value="size">Size</SelectItem>
+                    <SelectItem value="type">Type</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Sort Order Button - Right Side */}
+              <Button
+                onClick={toggleSortOrder}
+                variant="outline"
+                size="sm"
+                className="p-2"
+              >
+                {sortOrder === 'asc' ? <SortAsc size={16} /> : <SortDesc size={16} />}
+              </Button>
+            </div>
+
+            {/* Third Row: Column Count Slider and Dark Mode */}
             <div className="flex flex-wrap items-center justify-between gap-4">
               {/* Column Count Slider - Left */}
               <div className="flex items-center gap-2">
@@ -750,6 +749,11 @@ const Index = () => {
                   </>
                 )}
               </Button>
+
+              {/* Image Count - Far Right */}
+              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {images.length} images
+              </div>
             </div>
           </div>
         </Card>
