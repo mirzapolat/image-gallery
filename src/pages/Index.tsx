@@ -702,7 +702,7 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Second Row: Sliders */}
+            {/* Second Row: Sliders and Controls */}
             <div className="flex flex-wrap items-center justify-between gap-4">
               {/* Column Count Slider - Left */}
               <div className="flex items-center gap-2">
@@ -727,16 +727,29 @@ const Index = () => {
                 </span>
               </div>
 
-              {/* Dark Mode Toggle - Right */}
-              <div className="flex items-center gap-2">
-                <Sun size={20} className={isDarkMode ? 'text-gray-400' : 'text-yellow-500'} />
-                <Switch 
-                  checked={isDarkMode} 
-                  onCheckedChange={setIsDarkMode}
-                  className="data-[state=checked]:bg-blue-600"
-                />
-                <Moon size={20} className={isDarkMode ? 'text-blue-400' : 'text-gray-400'} />
-              </div>
+              {/* Dark Mode Toggle Button - Right */}
+              <Button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                variant="outline"
+                size="sm"
+                className={`flex items-center gap-2 ${
+                  isDarkMode 
+                    ? 'border-blue-400 hover:border-blue-300 hover:bg-blue-900/50 text-white' 
+                    : 'border-yellow-200 hover:border-yellow-300 hover:bg-yellow-50'
+                }`}
+              >
+                {isDarkMode ? (
+                  <>
+                    <Moon size={16} className="text-blue-400" />
+                    <span className="hidden sm:inline">Dark</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun size={16} className="text-yellow-500" />
+                    <span className="hidden sm:inline">Light</span>
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         </Card>
