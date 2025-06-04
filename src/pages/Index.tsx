@@ -144,12 +144,12 @@ const Index = () => {
     // Calculate container width based on actual viewport and padding
     let containerMaxWidth;
     if (isFullscreen) {
-      containerMaxWidth = window.innerWidth - 32; // fullscreen with padding
+      containerMaxWidth = window.innerWidth - 64; // fullscreen with equal padding on both sides (32px each)
     } else {
       // For normal mode, use the actual available width considering max-w-7xl constraint
       const viewportWidth = window.innerWidth;
       const maxContainerWidth = 1280; // max-w-7xl
-      const actualMaxWidth = Math.min(viewportWidth - 32, maxContainerWidth); // 32px for padding
+      const actualMaxWidth = Math.min(viewportWidth - 64, maxContainerWidth); // 64px for equal padding (32px each side)
       containerMaxWidth = actualMaxWidth;
     }
     
@@ -478,7 +478,7 @@ const Index = () => {
   if (isFullscreen) {
     return (
       <div 
-        className={`fixed inset-0 z-50 transition-colors duration-300 p-4 ${
+        className={`fixed inset-0 z-50 transition-colors duration-300 p-8 ${
           isDarkMode 
             ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
             : 'bg-gradient-to-br from-gray-50 to-gray-100'
@@ -592,7 +592,7 @@ const Index = () => {
 
   return (
     <div 
-      className={`min-h-screen transition-colors duration-300 p-4 ${
+      className={`min-h-screen transition-colors duration-300 p-8 ${
         isDarkMode 
           ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
           : 'bg-gradient-to-br from-gray-50 to-gray-100'
