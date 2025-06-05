@@ -702,16 +702,16 @@ const Index = () => {
             </div>
 
             {/* Third Row: Column Count Slider, Image Count, and Dark Mode */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
               {/* Column Count Slider - Left */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <span className={`text-sm font-medium whitespace-nowrap flex items-center gap-1 ${
                   isDarkMode ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   <Columns size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
                   <span className="hidden sm:inline">Columns:</span>
                 </span>
-                <div className="w-32">
+                <div className="w-24 sm:w-32">
                   <Slider 
                     defaultValue={[columnCount]} 
                     min={1} 
@@ -721,15 +721,15 @@ const Index = () => {
                     value={[columnCount]}
                   />
                 </div>
-                <span className={`text-xs w-8 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <span className={`text-xs w-6 sm:w-8 flex-shrink-0 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   {columnCount}
                 </span>
               </div>
 
               {/* Right side controls */}
-              <div className="flex items-center gap-4">
-                {/* Image Count */}
-                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                {/* Image Count - Hidden on small screens */}
+                <div className={`text-sm hidden md:block ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   {images.length} images
                 </div>
 
@@ -738,7 +738,7 @@ const Index = () => {
                   onClick={() => setIsDarkMode(!isDarkMode)}
                   variant="outline"
                   size="sm"
-                  className={`flex items-center gap-2 ${
+                  className={`flex items-center gap-1 sm:gap-2 flex-shrink-0 ${
                     isDarkMode 
                       ? 'border-blue-400 hover:border-blue-300 hover:bg-blue-900/50 text-white' 
                       : 'border-yellow-200 hover:border-yellow-300 hover:bg-yellow-50'
