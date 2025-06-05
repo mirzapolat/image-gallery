@@ -602,7 +602,7 @@ const Index = () => {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <div className="max-w-7xl mx-auto px-8">
+      <div className="max-w-7xl mx-auto">
         {/* Drag overlay */}
         {isDragOver && (
           <div className="fixed inset-0 bg-blue-500/20 border-4 border-dashed border-blue-500 z-50 flex items-center justify-center">
