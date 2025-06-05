@@ -670,9 +670,9 @@ const Index = () => {
               </Button>
             </div>
 
-            {/* Second Row: Sort Controls and Image Count */}
-            <div className="flex items-center justify-between gap-4">
-              {/* Sort Controls - Left Side */}
+            {/* Second Row: Sort Controls */}
+            <div className="flex items-center gap-4">
+              {/* Sort Select - Takes available space */}
               <div className="flex items-center gap-2 flex-1">
                 <span className={`text-sm font-medium whitespace-nowrap ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Sort by:
@@ -701,8 +701,8 @@ const Index = () => {
               </Button>
             </div>
 
-            {/* Third Row: Column Count Slider and Dark Mode */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
+            {/* Third Row: Column Count Slider, Image Count, and Dark Mode */}
+            <div className="flex items-center justify-between gap-4">
               {/* Column Count Slider - Left */}
               <div className="flex items-center gap-2">
                 <span className={`text-sm font-medium whitespace-nowrap flex items-center gap-1 ${
@@ -726,33 +726,36 @@ const Index = () => {
                 </span>
               </div>
 
-              {/* Dark Mode Toggle Button - Right */}
-              <Button
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                variant="outline"
-                size="sm"
-                className={`flex items-center gap-2 ${
-                  isDarkMode 
-                    ? 'border-blue-400 hover:border-blue-300 hover:bg-blue-900/50 text-white' 
-                    : 'border-yellow-200 hover:border-yellow-300 hover:bg-yellow-50'
-                }`}
-              >
-                {isDarkMode ? (
-                  <>
-                    <Moon size={16} className="text-blue-400" />
-                    <span className="hidden sm:inline">Dark</span>
-                  </>
-                ) : (
-                  <>
-                    <Sun size={16} className="text-yellow-500" />
-                    <span className="hidden sm:inline">Light</span>
-                  </>
-                )}
-              </Button>
+              {/* Right side controls */}
+              <div className="flex items-center gap-4">
+                {/* Image Count */}
+                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  {images.length} images
+                </div>
 
-              {/* Image Count - Far Right */}
-              <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {images.length} images
+                {/* Dark Mode Toggle Button */}
+                <Button
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  variant="outline"
+                  size="sm"
+                  className={`flex items-center gap-2 ${
+                    isDarkMode 
+                      ? 'border-blue-400 hover:border-blue-300 hover:bg-blue-900/50 text-white' 
+                      : 'border-yellow-200 hover:border-yellow-300 hover:bg-yellow-50'
+                  }`}
+                >
+                  {isDarkMode ? (
+                    <>
+                      <Moon size={16} className="text-blue-400" />
+                      <span className="hidden sm:inline">Dark</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sun size={16} className="text-yellow-500" />
+                      <span className="hidden sm:inline">Light</span>
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </div>
