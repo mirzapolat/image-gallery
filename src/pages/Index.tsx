@@ -704,14 +704,14 @@ const Index = () => {
             {/* Third Row: Column Count Slider, Image Count, and Dark Mode */}
             <div className="flex items-center justify-between gap-2 sm:gap-4">
               {/* Column Count Slider - Left */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-1 md:flex-initial">
                 <span className={`text-sm font-medium whitespace-nowrap flex items-center gap-1 ${
                   isDarkMode ? 'text-gray-300' : 'text-gray-700'
                 }`}>
                   <Columns size={16} className={isDarkMode ? 'text-gray-400' : 'text-gray-500'} />
                   <span className="hidden sm:inline">Columns:</span>
                 </span>
-                <div className="w-24 sm:w-32">
+                <div className="flex-1 md:w-32">
                   <Slider 
                     defaultValue={[columnCount]} 
                     min={1} 
