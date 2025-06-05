@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  image-gallery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: image-gallery
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
